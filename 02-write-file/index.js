@@ -2,8 +2,10 @@ const path = require('path');
 const fs = require('fs');
 const readline = require('readline');
 
-function writeFile(filePath, string) {
-    const writableStream = fs.createWriteStream(filePath, 'utf8');
+let filePath = path.resolve(__dirname, 'file.txt');
+const writableStream = fs.createWriteStream(filePath, 'utf8');
+
+function writeFile(filePath) {
 
     writableStream.on('error', function (error) {
         console.log(`error: ${error.message}`);
@@ -20,6 +22,7 @@ function writeFile(filePath, string) {
     rl.on('line', (line) => {
         switch (line.trim()) {
             case 'exit':
+                console.log(`All your sentences have been written to ${filePath}`);
                 rl.close();
                 break;
             default:
@@ -30,15 +33,16 @@ function writeFile(filePath, string) {
         }
     }).on('close', () => {
         writableStream.end();
-        writableStream.on('finish', () => {
-            console.log(`All your sentences have been written to ${filePath}`);
-        })
         process.exit();
+    }).on("SIGINT", function () {
+        process.emit("SIGINT");
     });
-
 }
 
-
-let filePath = path.resolve(__dirname, 'file.txt');
+process.on('SIGINT', function () {
+    console.log(`\nAll your sentences have been written to ${filePath}`);
+    writableStream.end();
+    process.exit();
+});
 
 writeFile(filePath);
