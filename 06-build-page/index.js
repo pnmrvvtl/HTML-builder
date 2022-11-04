@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const {mkdir, readdir, unlink, readFile, copyFile} = require('fs/promises');
+const {mkdir, readdir, unlink, readFile, copyFile, rmdir} = require('fs/promises');
 
 const assetsPath = path.resolve(__dirname, 'assets');
 const componentsPath = path.resolve(__dirname, 'components');
@@ -10,12 +10,27 @@ const stylesSourcePath = path.resolve(__dirname, 'styles');
 const stylesDestinationPath = path.resolve(__dirname, 'project-dist', 'style.css');
 const indexDestinationPath = path.resolve(__dirname, 'project-dist', 'index.html');
 
+async function deleteFiles(currPath) {
+    let files = await readdir(path.join(destinationPath, currPath), {withFileTypes: true});
+    for (const file of files) {
+        if (file.isFile()) {
+            await unlink(path.join(destinationPath, currPath, file.name));
+        } else {
+            await deleteFiles(path.join(currPath, file.name));
+            await rmdir(path.resolve(destinationPath, currPath, file.name));
+        }
+    }
+}
+
 async function makeDistinctionFolder() {
     await mkdir(destinationPath, {recursive: true});
     let files = await readdir(destinationPath, {withFileTypes: true});
     for (const file of files) {
         if (file.isFile()) {
             await unlink(path.join(destinationPath, file.name));
+        } else {
+            await deleteFiles(file.name);
+            await rmdir(path.resolve(destinationPath,file.name));
         }
     }
 }
@@ -73,26 +88,26 @@ async function createIndex() {
 }
 
 async function copyFiles(currPath) {
-    let files = await readdir(path.resolve(assetsPath, currPath), {withFileTypes: true});
+    let files = await readdir(path.join(assetsPath, currPath), {withFileTypes: true});
     for (const file of files) {
         if (file.isFile()) {
-            await copyFile(path.resolve(assetsPath, currPath, file.name), path.resolve(destinationPath, 'assets', currPath, file.name));
+            await copyFile(path.join(assetsPath, currPath, file.name), path.join(destinationPath, 'assets', currPath, file.name));
         } else {
-            await mkdir(path.resolve(destinationPath, 'assets', currPath, file.name));
-            await copyFiles(path.resolve(currPath, file.name));
+            await mkdir(path.join(destinationPath, 'assets', currPath, file.name));
+            await copyFiles(path.join(currPath, file.name));
         }
     }
 }
 
 async function copyAssets() {
-    await mkdir(path.resolve(destinationPath, 'assets'), {recursive: true});
+    await mkdir(path.join(destinationPath, 'assets'), {recursive: true});
     let files = await readdir(assetsPath, {withFileTypes: true});
 
     for (const file of files) {
         if (file.isFile()) {
-            await copyFile(path.resolve(assetsPath, file.name), path.resolve(destinationPath, 'assets', file.name));
+            await copyFile(path.join(assetsPath, file.name), path.resolve(destinationPath, 'assets', file.name));
         } else {
-            await mkdir(path.resolve(destinationPath, 'assets', file.name));
+            await mkdir(path.join(destinationPath, 'assets', file.name));
             await copyFiles(file.name);
         }
     }
