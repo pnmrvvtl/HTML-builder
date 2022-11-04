@@ -25,6 +25,3 @@ fs.mkdir(filePath, {recursive: true}, (err, path1) => {
         }
     });
 })
-
-
-//fs.copyFile
