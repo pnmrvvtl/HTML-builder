@@ -35,8 +35,7 @@ async function makeDistinctionFolder() {
     }
 }
 
-
-function mergeStyles() {
+async function mergeStyles() {
     fs.readdir(stylesSourcePath, {withFileTypes: true}, (err, all) => {
         let files = all.filter(el => el.isFile()).filter(value => path.parse(value.name).ext.slice(1) === 'css');
         files.map(file => {
@@ -67,16 +66,13 @@ async function createIndex() {
 
         while (componentIndex !== -1) {
             let componentName = template.slice(componentIndex + 2, template.indexOf('}}'));
-            console.log(`Component name = ${componentName}`);
             let currCompPath = path.resolve(componentsPath, `${componentName}.html`);
-            // console.log(currCompPath);
 
             let element = await readFile(currCompPath, {encoding: 'utf8'});
             template = template.replace(`{{${componentName}}}`, element);
             componentIndex = template.indexOf('{{');
         }
         const writableStream = fs.createWriteStream(indexDestinationPath, 'utf8');
-        // console.log(template);
         writableStream.write(template, error => {
             if (error) {
                 console.log(error);
